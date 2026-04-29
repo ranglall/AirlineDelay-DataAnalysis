@@ -9,7 +9,10 @@ This project explores and models the factors contributing to airline delays usin
 **Data Sampling:** 
 * The original dataset contained over one million cases, which presented significant computational challenges for visualization and report generation (knitting). To ensure efficiency and technical stability, the analysis was focused specifically on data from January 2015.
 * To incorporate qualitative airline data into the statistical models, the `AIRLINE` character variable was transformed into a binary numeric variable: `Top50`. This categorizes carriers based on whether they are ranked in the top 50 airlines globally, enabling more robust data analysis.
-* **Variable Mapping:** `Variable Chart.jpg` is a simple chart that maps variables and their relationships
+**Data Analysis:**
+* Conducted initial data anlysis, Exploratory Factor Analysis, and Structural Equation Modeling.
+**Variable Mapping:**
+* `Variable Chart.jpg` is a simple chart that maps variables and their relationships
 
 ---
 
