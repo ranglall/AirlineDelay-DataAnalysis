@@ -1,0 +1,144 @@
+---
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r warning=FALSE, message = FALSE}
+library(moments) 
+library(corrplot)
+```
+
+## Airline Flight Delays
+
+Hunter Dunn and Breanna Ranglall
+
+```{r}
+Flights <- read.csv("C:/Users/xst-rang5397/OneDrive - University of St. Thomas (1)/flights.csv")
+Flights <- Flights[,c("DAY_OF_WEEK", "Top50", "SCHEDULED_TIME", "ELAPSED_TIME", "DISTANCE", "AIR_SYSTEM_DELAY", "SECURITY_DELAY", "LATE_AIRCRAFT_DELAY", "WEATHER_DELAY", "ARRIVAL_DELAY")]
+```
+
+## Removal/Adjustments to Data
+
+Something to notice is the addition of the "Top50" variable. Since "AIRLINE" used character variables, we could not use it for data analysis. Therefore, we opted to categorize the airline by the ones who were in the Top 50 airlines in the world, and those who weren't.
+
+This data file had over one million cases. This large number of cases is very difficult to code with, for example, graphs do not want to load and we cannot knit to HTML. All of the data is from 2015, so we opted to use data from "January" only.
+
+```{r}
+Flights <- Flights[1:469969,]
+#Flights <- Flights[1:13951,]
+#Flights <- Flights[469970:899160,]
+```
+
+Even with this change, we still have 469,969 cases. Therefore, we opted to remove data using the "Complete Observations" method. We believed that "Complete Pairwise Observations" was not necessary because even after removing all the cases with missing data, we still have 95,951 cases to use for analysis which is more than enough.
+
+```{r}
+#Remove missing data
+Flights <- Flights |>
+  na.omit(Flights)
+```
+
+## One-Dimensional Data Visualization/Summary
+
+Means/Central Tendency:
+
+```{r}
+print('Means/Central Tendency:')
+for(x in 1:10){
+  print(paste(colnames(Flights[x]), ": ", mean(Flights[,x])))
+}
+```
+
+Standard Deviation/Dispersion:
+
+```{r}
+print('Standard Deviation/Dispersion:')
+for(x in 1:10){
+  print(paste(colnames(Flights[x]), ": ", sd(Flights[,x])))
+
+}
+```
+
+Kurtosis:
+
+```{r}
+print('Kurtosis:')
+for(x in 1:10){
+  print(paste(colnames(Flights[x]), ": ", kurtosis(Flights[,x])))
+
+}
+```
+
+Skewness:
+
+```{r}
+print('skewness:')
+for(x in 1:10){
+  print(paste(colnames(Flights[x]), ": ", skewness(Flights[,x])))
+}
+```
+
+Dotplots:
+
+```{r}
+print('dotplot:')
+for(x in 1:10){
+  print(colnames(Flights[x]))
+  stripchart(Flights[,x], method = "stack")
+}
+
+```
+
+All numeric variables except for "DAYS_OF_THE_WEEK" are right-skewed, however, "SECURITY_DELAY" is the most right-skewed. Regarding Kurtosis, all but "DAY_OF_WEEK" and "Top50" are leptokurtic.
+
+## Two-Dimensional Data Visualization/Summary
+
+Covariance Matrix:
+
+```{r}
+SIGMA <- cov(Flights)
+SIGMA 
+```
+
+Correlation Matrix:
+
+```{r}
+R <- cor(Flights)
+R
+```
+
+Scatterplot Matrix:
+
+```{r}
+pairs(Flights, pch = 16, lower.panel = NULL)
+```
+
+Correlation plot:
+
+```{r}
+corrplot(R, method = "square")
+```
+
+Based on the Correlation Matrix and Plot, there is the most correlation between "ELAPSED_TIME" and "SCHEDULED_TIME", "DISTANCE" and "SCHEDULED_TIME", and "DISTANCE" and "ELAPSED_TIME".
+
+## Two-Dimensional Outliers
+
+Based on the scatterplot matrix. The largest potential outlier seems to be from "AIR_SYSTEM_DELAY" and "SECURITY_DELAY".
+
+I will calculate a critical value at 0.05 and use Mahalanobis distance to determine if it's an outlier.
+
+```{r}
+m <- mahalanobis(x = Flights[,c(6,7)],
+            center = c(mean(Flights[,6]), mean(Flights[,7])),
+            cov = cov(Flights[,c(6,7)]))
+critical <- qchisq(p = 1 - 0.05, df = 2)
+```
+
+Remove the outliers and create a new to determine if they're influential.
+
+```{r}
+R <- cor(Flights[-which(m > critical),])
+corrplot(R, method = "square")
+```
+
+In comparing this updated correlation plot with the earlier one, we observe a slight increase in the correlation coefficients between 'LATE_AIRCRAFT_DELAY' and 'ARRIVAL_DELAY', as well as between 'LATE_AIRCRAFT_DELAY' and 'AIR_SYSTEM_DELAY'. All other correlations remain unchanged. Consequently, this suggests that the impact of potential outliers identified in the scatter plot matrix on these specific correlations is minimal. Thus, other potential outliers from the scatterplot matrix, which appeared to have a lesser impact initially, are confirmed to be even less influential on the overall correlation metrics.

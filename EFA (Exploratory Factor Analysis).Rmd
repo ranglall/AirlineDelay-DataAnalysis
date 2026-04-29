@@ -1,0 +1,94 @@
+---
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r warning=FALSE, message = FALSE}
+library(moments) 
+library(corrplot)
+library(rmarkdown); library(knitr); library(moments); 
+library(scatterplot3d); library(corrplot); library(pso)
+library(psych); library(GPArotation); library(lavaan)
+```
+
+## Airline Flight Delays
+
+Hunter Dunn and Breanna Ranglall
+
+```{r}
+#Read in Files
+Flights <- read.csv("C:/Users/brezy/OneDrive - University of St. Thomas/Certificates/flights with Top 50.csv")
+Flights <- Flights[,c("DAY_OF_WEEK", "Top50", "SCHEDULED_TIME", "ELAPSED_TIME", "DISTANCE", "AIR_SYSTEM_DELAY", "SECURITY_DELAY", "LATE_AIRCRAFT_DELAY", "WEATHER_DELAY", "ARRIVAL_DELAY")]
+
+#Pulling Data from just January
+Flights <- Flights[1:469969,]
+
+#Remove missing data
+Flights <- Flights |>
+  na.omit(Flights)
+
+#Creat correlation plot
+R <- cor(Flights[,c("DAY_OF_WEEK", "Top50", "SCHEDULED_TIME", "ELAPSED_TIME", "DISTANCE", "AIR_SYSTEM_DELAY", "SECURITY_DELAY", "LATE_AIRCRAFT_DELAY", "WEATHER_DELAY")])
+R
+```
+
+
+#Find Intrinsic Dimensionality
+
+Eigen Values:
+```{r}
+eigen(R)$values
+```
+
+Intrinsic Dimensonality using Kaiser:
+```{r}
+sum((eigen(R)$values)>1)
+```
+
+Intrinsic Dimensonality using Jollife's:
+```{r}
+sum((eigen(R)$values)>0.70)
+```
+
+We chose to use Jollife's criterion because of the dramatic drop off of the values after the 0.70 cut off.
+
+
+#Optimal Orthogonally Rotated Matrix
+
+Use pca() to extract the optimally orthogonally rotated loading matrix for the set of predictor dimensions:
+```{r}
+A2 <- pca(r = R, nfactors = 7, rotate = "varimax")$loadings[]
+A2
+```
+
+Create a correlation plot of the rotated loading matrix:
+```{r}
+corrplot(A2)
+```
+
+
+#Optimal Oblique Rotated Matrix
+
+Use pca() to extract the optimally obliquely rotated loading matrix and the factor correlation matrix:
+```{r}
+pca(r = R, nfactors = 7, rotate = "oblimin")
+```
+
+Based on the factor correlation matrix, no absolute values exceed the common threshold of 0.30. 'TC1' and 'TC7' are close at 0.28, but it still doesn't exceed the threshold. Therefore, oblique rotation is not necessary, we will use orthogonal rotation.
+
+
+#Variance
+
+Use pca() to summarize the variance explained by the orthogonal rotation:
+```{r}
+pca(r = R, nfactors = 7, rotate = "varimax")
+```
+
+99% of the variance from our original data set is explain by this seven factor orthogonal rotation.
+
+Calculate communality:
+```{r}
+rowSums(A2^2)
+```
+The extracted factors from the orthogonal rotation retain at least 97% of the variance in all of our original dimensions, therefore, it's above our 0.70 threshold and we are not losing a substantial amount of data.
